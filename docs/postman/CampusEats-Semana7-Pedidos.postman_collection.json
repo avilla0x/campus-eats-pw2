@@ -1,0 +1,226 @@
+{
+  "info": {
+    "name": "CampusEats API - Pedidos",
+    "description": "Programación Web 2 · Semana 7: relaciones, transacciones y pedidos (Hito 2, avance 1).\nAntes de usarla: npm run dev (http://localhost:3000) y haber corrido `npx prisma db seed`.\nSe puede ejecutar completa con el Runner, en orden.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "pedido_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Pedidos",
+      "item": [
+        {
+          "name": "Crear pedido (flujo feliz)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Trae total y items', () => { const r = pm.response.json(); pm.expect(r).to.have.property('total'); pm.expect(r.items).to.be.an('array'); });",
+                  "pm.collectionVariables.set('pedido_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": 2,\n  \"items\": [\n    { \"productoId\": 1, \"cantidad\": 1 },\n    { \"productoId\": 2, \"cantidad\": 2 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            }
+          }
+        },
+        {
+          "name": "Listar pedidos (paginado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Trae datos y paginacion', () => { const r = pm.response.json(); pm.expect(r.datos).to.be.an('array'); pm.expect(r).to.have.property('paginacion'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pedidos?pagina=1&porPagina=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"],
+              "query": [
+                { "key": "pagina", "value": "1" },
+                { "key": "porPagina", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Obtener pedido por id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No expone passwordHash', () => { pm.expect(JSON.stringify(pm.response.json())).to.not.include('passwordHash'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pedidos/{{pedido_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos", "{{pedido_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Cambiar estado a LISTO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estado actualizado', () => pm.expect(pm.response.json().estado).to.eql('LISTO'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"LISTO\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos/{{pedido_id}}/estado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos", "{{pedido_id}}", "estado"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pedidos - Errores",
+      "item": [
+        {
+          "name": "400 - items vacío",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Trae detalles', () => pm.expect(pm.response.json()).to.have.property('detalles'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"usuarioId\": 2,\n  \"items\": []\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            }
+          }
+        },
+        {
+          "name": "404 - pedido inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Responde 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/pedidos/999999",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos", "999999"]
+            }
+          }
+        },
+        {
+          "name": "409 - stock insuficiente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('Responde 409', () => pm.response.to.have.status(409));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": 2,\n  \"items\": [\n    { \"productoId\": 1, \"cantidad\": 999999 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos"]
+            }
+          }
+        },
+        {
+          "name": "409 - estado final (ENTREGADO/CANCELADO)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Requiere haber corrido antes \"Cambiar estado a LISTO\" y llevar el pedido a ENTREGADO manualmente', () => true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"CANCELADO\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/pedidos/{{pedido_id}}/estado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "pedidos", "{{pedido_id}}", "estado"]
+            },
+            "description": "Nota: este caso asume que {{pedido_id}} ya quedó en ENTREGADO o CANCELADO tras pruebas previas. Si no, cambia primero su estado a ENTREGADO y vuelve a correr esta petición."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+// prisma/schema.prisma — la fuente de verdad del modelo de datos
+// (es el diagrama de clases de la semana 2, en otra sintaxis)
+
+generator client {
+  provider = "prisma-client"            // cliente moderno de Prisma 7
+  output   = "../src/generated/prisma"  // dónde se genera (no se sube a git)
+}
+
+datasource db {
+  provider = "postgresql"               // la URL vive en prisma7.config.ts → .env
+}
+
+enum Rol {
+  CLIENTE
+  ADMIN
+}
+
+enum EstadoPedido {
+  RECIBIDO
+  PREPARANDO
+  LISTO
+  ENTREGADO
+  CANCELADO
+}
+
+model Usuario {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  email        String   @unique
+  passwordHash String                   // TODO semana 8: guardar el hash de bcrypt
+  rol          Rol      @default(CLIENTE)
+  creadoEn     DateTime @default(now())  // lo pone la base, no tu código
+  pedidos      Pedido[]
+}
+
+model Producto {
+  id         Int     @id @default(autoincrement())
+  nombre     String  @unique
+  precio     Int                         // pesos enteros: nada de flotantes para dinero
+  stock      Int     @default(0)
+  disponible Boolean @default(true)
+  descripcion String?
+  categoria  String  @default("General")
+  items      PedidoItem[]
+}
+
+model Pedido {
+  id        Int          @id @default(autoincrement())
+  estado    EstadoPedido @default(RECIBIDO)
+  total     Int                            // congelado al crear el pedido
+  creadoEn  DateTime     @default(now())
+  usuarioId Int
+  usuario   Usuario      @relation(fields: [usuarioId], references: [id])
+  items     PedidoItem[]
+}
+
+model PedidoItem {
+  id             Int      @id @default(autoincrement())
+  cantidad       Int
+  precioUnitario Int                       // congelado al momento de la compra
+  pedidoId       Int
+  pedido         Pedido   @relation(fields: [pedidoId], references: [id])
+  productoId     Int
+  producto       Producto @relation(fields: [productoId], references: [id])
+}

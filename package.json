@@ -1,0 +1,22 @@
+{
+  "name": "campuseats",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "dotenv": "17.4.2",
+    "express": "^4.21.0",
+    "express-validator": "^7.3.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "prisma": "7.10.0",
+    "nodemon": "^3.1.0"
+  }
+}
