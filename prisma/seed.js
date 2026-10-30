@@ -2,14 +2,18 @@
 // Flujo recomendado: `npx prisma migrate reset` (borra y aplica migraciones + corre este seed).
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client.ts';
+import bcrypt from 'bcrypt';
 import 'dotenv/config';
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+const RONDAS_BCRYPT = 10;
+const hash = (password) => bcrypt.hash(password, RONDAS_BCRYPT);
+
 const usuarios = [
-  { nombre: 'Admin Cafetería', email: 'admin@campuseats.co', passwordHash: 'placeholder', rol: 'ADMIN' },
-  { nombre: 'Ana Estudiante', email: 'ana@ucaldas.edu.co', passwordHash: 'placeholder', rol: 'CLIENTE' },
+  { nombre: 'Admin Cafetería', email: 'admin@campuseats.co', passwordHash: await hash('admin1234'), rol: 'ADMIN' },
+  { nombre: 'Ana Estudiante', email: 'ana@ucaldas.edu.co', passwordHash: await hash('ana12345'), rol: 'CLIENTE' },
 ];
 
 const productos = [
@@ -24,7 +28,7 @@ async function main() {
   for (const usuario of usuarios) {
     await prisma.usuario.upsert({
       where: { email: usuario.email },
-      update: {},
+      update: { passwordHash: usuario.passwordHash }, // así un usuario viejo no queda con el hash anterior
       create: usuario,
     });
   }

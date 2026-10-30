@@ -1,6 +1,7 @@
 // src/app.js — configura Express (sin arrancarlo)
 import express from 'express';
 import morgan from 'morgan';
+import authRouter from './routes/auth.routes.js';
 import productosRouter from './routes/productos.routes.js';
 import pedidosRouter from './routes/pedidos.routes.js';
 import reportesRouter from './routes/reportes.routes.js';
@@ -16,7 +17,10 @@ app.use(mantenimiento);
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Semana 9: las fotos subidas se sirven como archivos estáticos
+app.use('/imagenes/productos', express.static('uploads/productos'));
 app.get('/', (req, res) => res.json({ nombre: 'CampusEats API', version: '1.0' }));
+app.use('/api/auth', authRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/pedidos', pedidosRouter);
 app.use('/api/reportes', reportesRouter);

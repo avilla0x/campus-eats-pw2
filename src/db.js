@@ -10,4 +10,4 @@ if (!process.env.DATABASE_URL) {
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 
 // log: ['query'] imprime el SQL real de cada consulta. Déjalo encendido hasta la semana 8.
-export const prisma = new PrismaClient({ adapter, log: ['query'] });
+export const prisma = new PrismaClient({ adapter });

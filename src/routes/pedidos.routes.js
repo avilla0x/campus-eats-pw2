@@ -3,16 +3,19 @@ import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import * as controlador from '../controllers/pedidos.controller.js';
 import { validar } from '../middlewares/validar.js';
+import { autenticar, permitirRoles } from '../middlewares/auth.js';
 import { ESTADOS_VALIDOS, TRANSICIONES_VALIDAS } from '../services/pedidos.service.js';
 
 const router = Router();
+
+// Todo /api/pedidos exige estar autenticado; la identidad sale del token.
+router.use(autenticar);
 
 const idValido = param('id')
   .isInt({ min: 1 }).withMessage('El id debe ser entero positivo')
   .toInt();
 
 const reglasCrear = [
-  body('usuarioId').isInt({ min: 1 }).withMessage('usuarioId debe ser entero positivo').toInt(),
   body('items').isArray({ min: 1 }).withMessage('items debe ser un arreglo con al menos un elemento'),
   body('items.*.productoId').isInt({ min: 1 }).withMessage('productoId debe ser entero positivo').toInt(),
   body('items.*.cantidad').isInt({ min: 1 }).withMessage('cantidad debe ser entero positivo').toInt(),
@@ -26,10 +29,13 @@ const reglasListar = [
 ];
 
 router.post('/', reglasCrear, validar, controlador.crear);
-router.get('/', reglasListar, validar, controlador.listar);
+// Ruta concreta antes que la parametrizada (lección de semana 5): /mios no choca con /:id.
+router.get('/mios', reglasListar, validar, controlador.listarMios);
+router.get('/', permitirRoles('ADMIN'), reglasListar, validar, controlador.listar);
 router.get('/:id', idValido, validar, controlador.obtener);
 router.patch(
   '/:id/estado',
+  permitirRoles('ADMIN'),
   idValido,
   body('estado').isIn(TRANSICIONES_VALIDAS).withMessage(`estado debe ser uno de: ${TRANSICIONES_VALIDAS.join(', ')}`),
   validar,

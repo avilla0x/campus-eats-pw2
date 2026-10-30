@@ -2,17 +2,18 @@
 // Capa de negocio: pedidos, sus items y la transacción que los crea.
 import { prisma } from '../db.js';
 import { conflicto, noEncontrado } from '../errores.js';
+import { enviarConfirmacionPedido } from './email.service.js';
 
 const ESTADOS = ['RECIBIDO', 'PREPARANDO', 'LISTO', 'ENTREGADO', 'CANCELADO'];
 const ESTADOS_FINALES = ['ENTREGADO', 'CANCELADO'];
 
 const resumenPedido = {
-  usuario: { select: { nombre: true } },
+  usuario: { select: { nombre: true, email: true } },
   items: { include: { producto: { select: { nombre: true } } } },
 };
 
 export async function crear({ usuarioId, items }) {
-  return prisma.$transaction(async (tx) => {
+  const pedido = await prisma.$transaction(async (tx) => {
     const itemsCreados = [];
     let total = 0;
 
@@ -37,12 +38,20 @@ export async function crear({ usuarioId, items }) {
       include: resumenPedido,
     });
   });
+
+  // Fuera de la transacción: si el correo falla, el pedido ya quedó creado (no se revierte por esto).
+  enviarConfirmacionPedido(pedido.usuario.email, pedido).catch((error) => {
+    console.error('No se pudo enviar el email de confirmación:', error.message || error.code);
+  });
+
+  return pedido;
 }
 
-export async function listar({ estado, pagina = 1, porPagina = 10, desde }) {
+export async function listar({ estado, pagina = 1, porPagina = 10, desde, usuarioId }) {
   const where = {
     ...(estado && { estado }),
     ...(desde && { creadoEn: { gte: new Date(desde) } }),
+    ...(usuarioId && { usuarioId }),
   };
 
   const [datos, total] = await Promise.all([

@@ -92,6 +92,7 @@ export const ProductoScalarFieldEnum = {
   stock: 'stock',
   disponible: 'disponible',
   descripcion: 'descripcion',
+  imagenUrl: 'imagenUrl',
   categoria: 'categoria'
 } as const
 

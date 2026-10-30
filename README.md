@@ -1,6 +1,6 @@
 # CampusEats
 
-API REST para el proyecto de Programación Web 2 (hasta semana 7 / Hito 2, avance 1). Node.js + Express + Prisma 7 + PostgreSQL.
+API REST para el proyecto de Programación Web 2 (hasta semana 8: autenticación y roles). Node.js + Express + Prisma 7 + PostgreSQL.
 
 ## Arranque desde cero
 
@@ -42,8 +42,17 @@ src/
 
 ## Endpoints
 
-- `GET/POST /api/productos`, `GET/PUT/DELETE /api/productos/:id`, `PATCH /api/productos/:id/stock` (`{ "delta": N }`)
-- `POST /api/pedidos`, `GET /api/pedidos`, `GET /api/pedidos/:id`, `PATCH /api/pedidos/:id/estado`
-- `GET /api/reportes/ventas-dia`
+- `POST /api/auth/registro`, `POST /api/auth/login` (público)
+- `GET /api/productos`, `GET /api/productos/:id` (público) · `POST/PUT/DELETE /api/productos/:id`, `PATCH /api/productos/:id/stock` (ADMIN)
+- `POST /api/pedidos` (autenticado) · `GET /api/pedidos/mios` (autenticado) · `GET /api/pedidos` (ADMIN) · `GET /api/pedidos/:id` (dueño o ADMIN) · `PATCH /api/pedidos/:id/estado` (ADMIN)
+- `GET/POST /api/usuarios`, `GET /api/usuarios/:id` (ADMIN)
+- `GET /api/reportes/ventas-dia` (ADMIN)
 
-La colección de Postman está en `docs/postman/` (una para productos, otra para pedidos).
+## Autenticación (semana 8)
+
+- JWT por header `Authorization: Bearer <token>`. El token se firma con `JWT_SECRET` y expira según `JWT_EXPIRA` (ver `.env.example`).
+- Las contraseñas se guardan con `bcrypt` (nunca en texto plano); el `passwordHash` nunca sale en una respuesta.
+- La identidad de quien hace la petición sale siempre del token (`req.usuario`), nunca del body.
+- Usuarios de ejemplo tras el seed: `admin@campuseats.co` / `admin1234` (ADMIN) y `ana@ucaldas.edu.co` / `ana12345` (CLIENTE).
+
+La colección de Postman está en `docs/postman/` (productos, pedidos y auth).

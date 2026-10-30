@@ -1,0 +1,305 @@
+{
+  "info": {
+    "name": "CampusEats API - Auth y roles",
+    "description": "Programación Web 2 · Semana 8: bcrypt, JWT y autorización por roles.\nAntes de usarla: npm run dev (http://localhost:3000) y haber corrido `npx prisma db seed`.\nCorre primero la carpeta \"1. Login\" (guarda los tokens), luego el resto en orden con el Runner.\nUsuarios de seed: admin@campuseats.co / admin1234 (ADMIN), ana@ucaldas.edu.co / ana12345 (CLIENTE).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "token_admin", "value": "" },
+    { "key": "token_cliente", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Login",
+      "item": [
+        {
+          "name": "Login ADMIN (guarda token_admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Trae token', () => pm.expect(pm.response.json()).to.have.property('token'));",
+                  "pm.collectionVariables.set('token_admin', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@campuseats.co\",\n  \"password\": \"admin1234\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login CLIENTE (guarda token_cliente)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('token_cliente', pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@ucaldas.edu.co\",\n  \"password\": \"ana12345\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Registro de cliente nuevo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No expone passwordHash', () => pm.expect(JSON.stringify(pm.response.json())).to.not.include('passwordHash'));",
+                  "pm.test('Rol siempre CLIENTE, aunque se pida ADMIN en el body', () => pm.expect(pm.response.json().rol).to.eql('CLIENTE'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Postman Tester {{$timestamp}}\",\n  \"email\": \"postman{{$timestamp}}@ucaldas.edu.co\",\n  \"password\": \"postman1234\",\n  \"rol\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/registro",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "registro"]
+            },
+            "description": "Reto semana 8, paso 11: el body intenta inyectar rol ADMIN; la API debe ignorarlo."
+          }
+        },
+        {
+          "name": "Login con contraseña incorrecta (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 401', () => pm.response.to.have.status(401));",
+                  "pm.test('Mismo mensaje que email inexistente', () => pm.expect(pm.response.json().error).to.equal('Credenciales inválidas'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ana@ucaldas.edu.co\",\n  \"password\": \"incorrecta123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Productos protegidos",
+      "item": [
+        {
+          "name": "GET productos sin token (público, 200)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('Responde 200', () => pm.response.to.have.status(200));"] }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/productos", "host": ["{{base_url}}"], "path": ["api", "productos"] }
+          }
+        },
+        {
+          "name": "POST producto sin token (401)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 401', () => pm.response.to.have.status(401));"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Sin token {{$timestamp}}\",\n  \"precio\": 1000\n}" },
+            "url": { "raw": "{{base_url}}/api/productos", "host": ["{{base_url}}"], "path": ["api", "productos"] }
+          }
+        },
+        {
+          "name": "POST producto con token CLIENTE (403)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 403', () => pm.response.to.have.status(403));"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_cliente}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Cliente no puede {{$timestamp}}\",\n  \"precio\": 1000\n}" },
+            "url": { "raw": "{{base_url}}/api/productos", "host": ["{{base_url}}"], "path": ["api", "productos"] }
+          }
+        },
+        {
+          "name": "POST producto con token ADMIN (201)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 201', () => pm.response.to.have.status(201));"] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Creado por admin {{$timestamp}}\",\n  \"precio\": 1000,\n  \"stock\": 5\n}" },
+            "url": { "raw": "{{base_url}}/api/productos", "host": ["{{base_url}}"], "path": ["api", "productos"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Usuarios (solo ADMIN)",
+      "item": [
+        {
+          "name": "GET usuarios con token CLIENTE (403)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 403', () => pm.response.to.have.status(403));"] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_cliente}}" }],
+            "url": { "raw": "{{base_url}}/api/usuarios", "host": ["{{base_url}}"], "path": ["api", "usuarios"] }
+          }
+        },
+        {
+          "name": "GET usuarios con token ADMIN (200, sin passwordHash)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No expone passwordHash', () => pm.expect(JSON.stringify(pm.response.json())).to.not.include('passwordHash'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": { "raw": "{{base_url}}/api/usuarios", "host": ["{{base_url}}"], "path": ["api", "usuarios"] }
+          }
+        },
+        {
+          "name": "GET usuarios con token con firma alterada (401)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 401', () => pm.response.to.have.status(401));"] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}x" }],
+            "url": { "raw": "{{base_url}}/api/usuarios", "host": ["{{base_url}}"], "path": ["api", "usuarios"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Pedidos (identidad desde el token)",
+      "item": [
+        {
+          "name": "Crear pedido como CLIENTE (identidad del token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201', () => pm.response.to.have.status(201));",
+                  "pm.test('El pedido queda a nombre de quien hizo login, no de un usuarioId del body', () => pm.expect(pm.response.json()).to.have.property('usuarioId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_cliente}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"items\": [\n    { \"productoId\": 1, \"cantidad\": 1 }\n  ]\n}" },
+            "url": { "raw": "{{base_url}}/api/pedidos", "host": ["{{base_url}}"], "path": ["api", "pedidos"] },
+            "description": "Nota: ya no se envía usuarioId. La identidad sale de req.usuario, tomado del token."
+          }
+        },
+        {
+          "name": "GET /pedidos/mios con token CLIENTE (200)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 200', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_cliente}}" }],
+            "url": { "raw": "{{base_url}}/api/pedidos/mios", "host": ["{{base_url}}"], "path": ["api", "pedidos", "mios"] }
+          }
+        },
+        {
+          "name": "GET /pedidos (listar todos) con token CLIENTE (403)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 403', () => pm.response.to.have.status(403));"] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_cliente}}" }],
+            "url": { "raw": "{{base_url}}/api/pedidos", "host": ["{{base_url}}"], "path": ["api", "pedidos"] }
+          }
+        },
+        {
+          "name": "GET /pedidos (listar todos) con token ADMIN (200)",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Responde 200', () => pm.response.to.have.status(200));"] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": { "raw": "{{base_url}}/api/pedidos", "host": ["{{base_url}}"], "path": ["api", "pedidos"] }
+          }
+        }
+      ]
+    }
+  ]
+}

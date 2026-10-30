@@ -1,0 +1,10 @@
+# Use this workspace to collaborate
+workspace:
+  id: 2f00cc61-c380-4e7f-8309-a67bb558cc92
+
+localResources:
+  collections:
+    - ../docs/postman-collection.json
+    - ../docs/postman/CampusEats-Semana5.postman_collection.json
+    - ../docs/postman/CampusEats-Semana7-Pedidos.postman_collection.json
+    - ../docs/postman/CampusEats-Semana8-Auth.postman_collection.json

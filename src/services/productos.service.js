@@ -55,3 +55,11 @@ export async function eliminar(id) {
   await buscarPorId(id);
   await prisma.producto.delete({ where: { id } });
 }
+
+// src/services/productos.service.js
+// Semana 9: función propia para la foto. actualizar() no sirve: solo copia los campos
+// que conoce (nombre, precio, stock…) y un imagenUrl se perdería sin ningún error
+export async function cambiarImagen(id, imagenUrl) {
+  await buscarPorId(id); // 404 si no existe
+  return prisma.producto.update({ where: { id }, data: { imagenUrl } });
+}

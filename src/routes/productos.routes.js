@@ -16,6 +16,7 @@ import { body, param, query } from 'express-validator';
 import * as controlador from '../controllers/productos.controller.js';
 import { validar } from '../middlewares/validar.js';
 import { requiereApiKey } from '../middlewares/apiKey.js';
+import { autenticar, permitirRoles } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -63,15 +64,19 @@ const reglasListar = [
 ];
 
 // ---------- Rutas ----------
+// Política de acceso (semana 8): lectura pública, escritura solo ADMIN.
+const soloAdmin = [autenticar, permitirRoles('ADMIN')];
+
 router.get('/', reglasListar, validar, controlador.listar);
 router.get('/:id', idValido, validar, controlador.obtener);
-router.post('/', reglasCrear, validar, controlador.crear);
-router.put('/:id', idValido, reglasReemplazar, validar, controlador.actualizar);
-router.delete('/:id', requiereApiKey, idValido, validar, controlador.eliminar);
+router.post('/', soloAdmin, reglasCrear, validar, controlador.crear);
+router.put('/:id', soloAdmin, idValido, reglasReemplazar, validar, controlador.actualizar);
+router.delete('/:id', soloAdmin, requiereApiKey, idValido, validar, controlador.eliminar);
 
 // Reto: ajustar stock con un delta (+ entrada de mercancía, − venta)
 router.patch(
   '/:id/stock',
+  soloAdmin,
   idValido,
   body('delta')
     .isInt().withMessage('delta debe ser un entero')

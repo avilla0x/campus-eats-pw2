@@ -58,3 +58,20 @@ export async function eliminar(req, res, next) {
     next(error);
   }
 }
+
+// src/controllers/productos.controller.js
+export async function subirFoto(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Adjunta un archivo en el campo "imagen"' });
+    }
+    // Guardamos la RUTA pública en la BD, nunca el archivo dentro de la BD
+    const producto = await servicio.cambiarImagen(
+      Number(req.params.id),
+      `/imagenes/productos/${req.file.filename}`
+    );
+    res.json(producto);
+  } catch (error) {
+    next(error);
+  }
+}
